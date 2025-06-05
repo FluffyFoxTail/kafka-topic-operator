@@ -1,0 +1,4 @@
+# This patch replace value of imagePullPolicy to getting images from cluster storage
+- op: replace
+  path: /spec/template/spec/containers/0/imagePullPolicy
+  value: IfNotPresent

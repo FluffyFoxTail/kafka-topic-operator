@@ -26,3 +26,10 @@ resources:
 - kafkatopic_editor_role.yaml
 - kafkatopic_viewer_role.yaml
 
+patches:
+  - path: patch-rbac-serviceaccount.yaml
+    target:
+      kind: ClusterRoleBinding
+  - path: patch-rbac-clusterrole.yaml
+    target:
+      kind: ClusterRole

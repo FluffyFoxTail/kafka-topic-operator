@@ -1,0 +1,21 @@
+# This patch add rules for operator
+- op: add
+  path: /rules/-
+  value:
+    apiGroups: [""]
+    resources: ["services", "endpoints", "pods"]
+    verbs: ["get", "list", "watch"]
+
+- op: add
+  path: /rules/-
+  value:
+    apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list", "watch"]
+
+- op: add
+  path: /rules/-
+  value:
+    apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch", "update"]
