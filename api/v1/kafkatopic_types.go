@@ -20,22 +20,43 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+type KafkaTopicDescription struct {
+	Name              string `json:"name"`
+	Partitions        int32  `json:"partitions"`
+	ReplicationFactor int16  `json:"replicationFactor"`
+}
 
 // KafkaTopicSpec defines the desired state of KafkaTopic.
 type KafkaTopicSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Количество брокеров Kafka
+	Replicas int32 `json:"replicas,omitempty"`
 
-	// Foo is an example field of KafkaTopic. Edit kafkatopic_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	/// Время до повторной синхронизации при ошибке
+	RequeueDelaySeconds int `json:"requeueDelaySeconds"`
+
+	/// Название Kubernetes Service, через который доступна Kafka
+	KafkaServiceName string `json:"kafkaServiceName"`
+
+	// Namespace, где этот Service находится
+	KafkaServiceNamespace string `json:"kafkaServiceNamespace"`
+
+	// Порт, по которому доступна Kafka (по умолчанию 9092)
+	KafkaPort int32 `json:"kafkaPort,omitempty"`
+
+	// Список топиков
+	Topics []KafkaTopicDescription `json:"topics,omitempty"`
 }
 
 // KafkaTopicStatus defines the observed state of KafkaTopic.
 type KafkaTopicStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Условия состояния (Ready, Failed и т.д.)
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// Список созданных топиков
+	Topics []string `json:"topics,omitempty"`
+
+	// Сообщение об ошибке
+	ErrorMessage string `json:"errorMessage,omitempty"`
 }
 
 // +kubebuilder:object:root=true
