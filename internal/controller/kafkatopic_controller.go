@@ -19,10 +19,11 @@ package controller
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/IBM/sarama"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	"time"
 
 	kafkav1 "github.com/FluffyFoxTail/kafka-topic-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -72,7 +73,12 @@ func (r *KafkaTopicReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		r.Recorder.Event(&kafkaTopic, corev1.EventTypeWarning, "KafkaAdminError", "Failed to create Kafka admin client")
 		return ctrl.Result{RequeueAfter: r.getDelay(kafkaTopic)}, err
 	}
-	defer adminClient.Close()
+	defer func() {
+		if err := adminClient.Close(); err != nil {
+			log.Error(err, "failed to close Kafka admin client")
+
+		}
+	}()
 
 	for _, topic := range kafkaTopic.Spec.Topics {
 		if err = r.createTopicIfNotExists(adminClient, topic); err != nil {
@@ -125,7 +131,7 @@ func (r *KafkaTopicReconciler) createKafkaAdminClient(ctx context.Context, kt ka
 	}
 
 	var endpointSlices discoveryv1.EndpointSliceList
-	if err := r.Client.List(ctx, &endpointSlices,
+	if err := r.List(ctx, &endpointSlices,
 		client.InNamespace(kt.Namespace),
 		client.MatchingLabels{endpointSliceLabelServiceName: kt.Spec.KafkaServiceName},
 	); err != nil || len(endpointSlices.Items) == 0 {

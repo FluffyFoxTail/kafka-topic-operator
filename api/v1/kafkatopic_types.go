@@ -31,10 +31,10 @@ type KafkaTopicSpec struct {
 	// Количество брокеров Kafka
 	Replicas int32 `json:"replicas,omitempty"`
 
-	/// Время до повторной синхронизации при ошибке
+	// Время до повторной синхронизации при ошибке
 	RequeueDelaySeconds int `json:"requeueDelaySeconds"`
 
-	/// Название Kubernetes Service, через который доступна Kafka
+	// Название Kubernetes Service, через который доступна Kafka
 	KafkaServiceName string `json:"kafkaServiceName"`
 
 	// Namespace, где этот Service находится
