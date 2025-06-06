@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"time"
 
+	clustrer_admin "github.com/FluffyFoxTail/kafka-topic-operator/internal/controller/clustrer-admin"
+
 	"github.com/IBM/sarama"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -41,6 +43,8 @@ type KafkaTopicReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
+
+	AdminFactory clustrer_admin.AdminFactory
 }
 
 // +kubebuilder:rbac:groups=kafka.fluffyfoxtail.com,resources=kafkatopics,verbs=get;list;watch;create;update;patch;delete
@@ -119,7 +123,7 @@ func (r *KafkaTopicReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return ctrl.Result{}, nil
 }
 
-func (r *KafkaTopicReconciler) createKafkaAdminClient(ctx context.Context, kt kafkav1.KafkaTopic) (sarama.ClusterAdmin, error) {
+func (r *KafkaTopicReconciler) createKafkaAdminClient(ctx context.Context, kt kafkav1.KafkaTopic) (clustrer_admin.ClusterAdmin, error) {
 	svc := &corev1.Service{}
 	svcKey := types.NamespacedName{
 		Name:      kt.Spec.KafkaServiceName,
@@ -163,10 +167,10 @@ outer:
 
 	config := sarama.NewConfig()
 	config.Version = sarama.V2_8_0_0
-	return sarama.NewClusterAdmin([]string{fmt.Sprintf("%s.%s.svc.cluster.local:%d", svc.Name, svc.Namespace, port)}, config)
+	return r.AdminFactory.NewClient([]string{fmt.Sprintf("%s.%s.svc.cluster.local:%d", svc.Name, svc.Namespace, port)}, config)
 }
 
-func (r *KafkaTopicReconciler) createTopicIfNotExists(adminClient sarama.ClusterAdmin, topic kafkav1.KafkaTopicDescription) error {
+func (r *KafkaTopicReconciler) createTopicIfNotExists(adminClient clustrer_admin.ClusterAdmin, topic kafkav1.KafkaTopicDescription) error {
 	topics, err := r.getTopics(adminClient)
 	if err != nil {
 		return err
@@ -181,7 +185,7 @@ func (r *KafkaTopicReconciler) createTopicIfNotExists(adminClient sarama.Cluster
 	return nil
 }
 
-func (r *KafkaTopicReconciler) getTopics(adminClient sarama.ClusterAdmin) (map[string]sarama.TopicDetail, error) {
+func (r *KafkaTopicReconciler) getTopics(adminClient clustrer_admin.ClusterAdmin) (map[string]sarama.TopicDetail, error) {
 	topics, err := adminClient.ListTopics()
 	if err != nil {
 		return nil, err
